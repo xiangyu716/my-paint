@@ -1,10 +1,11 @@
 <!--index.wxml-->
 <view class="container">
-  <canvas type="2d" canvas-id="my-canvas" id="my-canvas" class="my-canvas" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd" z-index="0"
+  <image wx:if="isShowConfig" src="{{imgUrl}}" class="my-canvas"></image>
+  <canvas type="2d" canvas-id="my-canvas" id="my-canvas" class="my-canvas" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd" bindtouchcancel="touchEnd" z-index="0"
   ></canvas>
   <view class="footer">
-    <!-- <view class="footer__button">撤回</view> -->
     <view class="footer__button" bindtap="resetCanvas">清空</view>
+    <view class="footer__button {{isEscaping ? 'footer__button--active' : ''}}" bindtap="escape">擦除</view>
     <view class="footer__button" bindtap="changeConfigShow">画笔</view>
     <view class="footer__button" bindtap="download">保存</view>
   </view>
@@ -24,9 +25,10 @@
         </view>
       </view>
     </view>
+    <!-- 画笔颜色 -->
     <view class="config-item">
-      <view class="config-item__title" data-name="color" bindtap="onConfigTap" style="background-color: {{brush.color.value || '#32c9c9'}}">
-        颜色
+      <view class="config-item__title" data-name="color" bindtap="onConfigTap" style="color: {{brush.color.value || '#32c9c9'}}">
+        画笔颜色
       </view>
       <view class="config-item__operation">
         <slider
@@ -58,6 +60,45 @@
         />
         <view class="config-item__operation__input">
           <input type="number" value="{{brush.color.b}}" data-name="b" bindinput="onBrushColorInput" />
+        </view>
+      </view>
+    </view>
+    <!-- 画板颜色 -->
+    <view class="config-item">
+      <view class="config-item__title" data-name="color" bindtap="onConfigTap"
+      style="background-color: {{brush.bgColor.value}};color: rgb({{255 - brush.bgColor.r}}, {{255 - brush.bgColor.g}}, {{255 - brush.bgColor.b}})">
+        画板颜色
+      </view>
+      <view class="config-item__operation">
+        <slider
+          data-name="r"
+          bindchange="onBgColorChange"
+          value="{{brush.bgColor.r}}" min="0" max="255"
+          block-size="14"
+          activeColor="red"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.bgColor.r}}" data-name="r" bindblur="onBgColorChange" />
+        </view>
+        <slider
+          data-name="g"
+          bindchange="onBgColorChange"
+          value="{{brush.bgColor.g}}" min="0" max="255"
+          block-size="14"
+          activeColor="green"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.bgColor.g}}" data-name="g" bindblur="onBgColorChange" />
+        </view>
+        <slider
+          data-name="b"
+          bindchange="onBgColorChange"
+          value="{{brush.bgColor.b}}" min="0" max="255"
+          block-size="14"
+          activeColor="blue"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.bgColor.b}}" data-name="b" bindblur="onBgColorChange" />
         </view>
       </view>
     </view>

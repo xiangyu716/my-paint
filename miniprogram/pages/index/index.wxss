@@ -36,19 +36,23 @@ page {
   text-align: center;
   border-radius: 10rpx;
 }
+.footer__button--active{
+  border: 2rpx solid #327ec9;
+}
 .config-item{
   margin-bottom: 20rpx;
 }
 .config-item__title{
   height: 60rpx;
-  width: 100rpx;
+  width: 150rpx;
   line-height: 60rpx;
   text-align: center;
-  background-color: #32c9c9;
+  background-color: #fff;
   border-radius: 10rpx;
-  color: #fff;
+  color: #333;
   margin-bottom: 20rpx;
   transition-duration: .3s;
+  box-shadow: 0 0 2px 0 #d3d3d3;
 }
 .config-item__operation{
   display: flex;
@@ -72,16 +76,17 @@ page {
   margin-left: 20rpx;
 }
 .config-item__operation__input input{
-  background-color: #32c9c9;
+  background-color: #fff;
   border-radius: 10rpx;
+  border: 1rpx solid #eaeaea;
   text-align: center;
-  color: #fff;
+  color: #333;
 }
 .config-popup{
   position: absolute;
-  bottom: -40vh;
+  bottom: -60vh;
   left: 0;
-  height: 40vh;
+  height: 60vh;
   width: 100%;
   padding: 20rpx;
   box-sizing: border-box;
@@ -92,7 +97,7 @@ page {
 .config-confirm{
   position: absolute;
   left: 20rpx;
-  bottom: 20rpx;
+  bottom: 0;
   width: calc(100% - 40rpx);
   height: 100rpx;
   background-color: #32c9c9;
