@@ -1,0 +1,68 @@
+<!--index.wxml-->
+<view class="container">
+  <canvas type="2d" canvas-id="my-canvas" id="my-canvas" class="my-canvas" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd" z-index="0"
+  ></canvas>
+  <view class="footer">
+    <!-- <view class="footer__button">撤回</view> -->
+    <view class="footer__button" bindtap="resetCanvas">清空</view>
+    <view class="footer__button" bindtap="changeConfigShow">画笔</view>
+    <view class="footer__button" bindtap="download">保存</view>
+  </view>
+  <view id="config-popup" class="config-popup">
+    <view class="config-item">
+      <view class="config-item__title" data-name="width" bindtap="onConfigTap">
+        粗细
+      </view>
+      <view class="config-item__operation">
+        <slider
+          bindchange="onBrushWidthChange"
+          value="{{brush.width}}" min="1" max="30"
+          block-size="14"
+        />
+        <view class="config-width__preview">
+          <view style="border-radius: 50%; margin: 0 auto; height: {{brush.width}}px; width: {{brush.width}}px;  background-color: {{brush.color.value || '#000'}}; "></view>
+        </view>
+      </view>
+    </view>
+    <view class="config-item">
+      <view class="config-item__title" data-name="color" bindtap="onConfigTap" style="background-color: {{brush.color.value || '#32c9c9'}}">
+        颜色
+      </view>
+      <view class="config-item__operation">
+        <slider
+          data-name="r"
+          bindchange="onBrushColorChange"
+          value="{{brush.color.r}}" min="0" max="255"
+          block-size="14"
+          activeColor="red"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.color.r}}" data-name="r" bindinput="onBrushColorInput" />
+        </view>
+        <slider
+          data-name="g"
+          bindchange="onBrushColorChange"
+          value="{{brush.color.g}}" min="0" max="255"
+          block-size="14"
+          activeColor="green"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.color.g}}" data-name="g" bindinput="onBrushColorInput" />
+        </view>
+        <slider
+          data-name="b"
+          bindchange="onBrushColorChange"
+          value="{{brush.color.b}}" min="0" max="255"
+          block-size="14"
+          activeColor="blue"
+        />
+        <view class="config-item__operation__input">
+          <input type="number" value="{{brush.color.b}}" data-name="b" bindinput="onBrushColorInput" />
+        </view>
+      </view>
+    </view>
+    <view class="config-confirm" bindtap="changeConfigShow">
+      确定
+    </view>
+  </view>
+</view>

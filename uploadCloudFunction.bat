@@ -1,0 +1,1 @@
+"D:\Program Files (x86)\微信web开发者工具\cli.bat" cloud functions deploy --e cloud1-1g8k44k63d4b7a1d --n quickstartFunctions --r --project "D:\test\my-paint" --report_first --report
