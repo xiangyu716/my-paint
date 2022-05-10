@@ -3,55 +3,40 @@
   <canvas type="2d" canvas-id="my-canvas" id="my-canvas" class="my-canvas" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd" bindtouchcancel="touchEnd"
   ></canvas>
   <view class="footer">
-    <view class="footer__button footer__button__state {{!isEscaping ? 'footer__button--active' : ''}}" bindtap="escape">画笔</view>
-    <view class="footer__button footer__button__state {{isEscaping ? 'footer__button--active' : ''}}" bindtap="escape">擦除</view>
+    <view class="footer__button footer__button__state {{!isEscaping ? 'footer__button--active' : ''}}" bindtap="onBrushClick">画笔</view>
+    <view class="footer__button footer__button__state {{isEscaping ? 'footer__button--active' : ''}}" bindtap="onEscapeClick">擦除</view>
     <view class="footer__button" bindtap="clearCanvas">清空</view>
-    <view class="footer__button" bindtap="changeConfigShow">设置</view>
-    <view class="footer__button" bindtap="download">保存</view>
+    <view class="footer__button" bindtap="changeConfigShow">更多</view>
   </view>
   <view wx:if="{{isShowConfig}}" id="config-popup" class="config-popup">
-    <view class="config-item">
-      <view class="config-item__header">
-        <view class="config-item__title">画笔大小</view>
-        <view class="config-brush-width__preview" style="height: {{config.brushWidth}}px; width: {{config.brushWidth}}px;">
-        </view>
-      </view>
-      <view class="config-item__operation">
+    <view class="config-operations">
+      <!-- 画笔大小 -->
+      <view wx:if="{{activeConfig==='lineWidth'}}" class="config-operation">
+        <view class="config-operation__header">画笔大小</view>
         <slider
           bindchange="onBrushWidthChange"
-          value="{{config.brushWidth}}" min="1" max="30"
+          value="{{config.lineWidth}}" min="1" max="30"
           block-size="14"
         />
-        <view class="config-item__value">
-          {{config.brushWidth}}
+        <view class="config-operation__value">
+          {{config.lineWidth}}
         </view>
       </view>
-    </view>
-    <view class="config-item">
-      <view class="config-item__header">
-        <view class="config-item__title">橡皮大小</view>
-        <view class="config-escape-width__preview" style="border-radius: {{(config.escapeWidth > 30 ? 30 : config.escapeWidth) / 2}}px; height: {{config.escapeWidth - 2}}px; width: {{config.escapeWidth - 2}}px;">
-        </view>
-      </view>
-      <view class="config-item__operation">
+      <!-- 橡皮大小 -->
+      <view wx:if="{{activeConfig==='escapeWidth'}}" class="config-operation">
+        <view class="config-operation__header">橡皮大小</view>
         <slider
           bindchange="onEscapeWidthChange"
           value="{{config.escapeWidth}}" min="1" max="100"
           block-size="14"
         />
-        <view class="config-item__value">
+        <view class="config-operation__value">
           {{config.escapeWidth}}
         </view>
       </view>
-    </view>
-    <!-- 画笔颜色 -->
-    <view class="config-item">
-      <view class="config-item__header">
-        <view class="config-item__title">画笔颜色</view>
-        <view class="config-config-color__preview" style="background-color: {{config.brushColor.value}}">
-        </view>
-      </view>
-      <view class="config-item__operation">
+      <!-- 画笔颜色 -->
+      <view wx:if="{{activeConfig==='brushColor'}}" class="config-operation">
+        <view class="config-operation__header">画笔颜色</view>
         <slider
           data-name="r"
           bindchange="onBrushColorChange"
@@ -59,7 +44,7 @@
           block-size="14"
           activeColor="rgb({{config.brushColor.r}}, 0, 0)"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.brushColor.r}}" data-name="r" bindinput="onBrushColorInput" />
         </view>
         <slider
@@ -69,7 +54,7 @@
           block-size="14"
           activeColor="rgb(0, {{config.brushColor.g}}, 0)"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.brushColor.g}}" data-name="g" bindinput="onBrushColorInput" />
         </view>
         <slider
@@ -79,19 +64,16 @@
           block-size="14"
           activeColor="rgb(0, 0, {{config.brushColor.b}})"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.brushColor.b}}" data-name="b" bindinput="onBrushColorInput" />
         </view>
       </view>
-    </view>
-    <!-- 画板颜色 -->
-    <view class="config-item">
-      <view class="config-item__header">
-        <view class="config-item__title">画板颜色</view>
-        <view class="config-bg-color__preview" style="background-color: {{config.bgColor.value}}">
+      <!-- 画板颜色 -->
+      <view wx:if="{{activeConfig==='bgColor'}}" class="config-operation">
+        <view class="config-operation__header">画板颜色</view>
+        <view class="tips width100">
+          注意：更改画板会清空当前内容
         </view>
-      </view>
-      <view class="config-item__operation">
         <slider
           data-name="r"
           bindchange="onBgColorChange"
@@ -99,7 +81,7 @@
           block-size="14"
           activeColor="rgb({{config.bgColor.r}}, 0, 0)"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.bgColor.r}}" data-name="r" bindblur="onBgColorChange" />
         </view>
         <slider
@@ -109,7 +91,7 @@
           block-size="14"
           activeColor="rgb(0, {{config.bgColor.g}}, 0)"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.bgColor.g}}" data-name="g" bindblur="onBgColorChange" />
         </view>
         <slider
@@ -119,13 +101,100 @@
           block-size="14"
           activeColor="rgb(0, 0, {{config.bgColor.b}})"
         />
-        <view class="config-item__operation__input">
+        <view class="config-operation__input">
           <input type="number" value="{{config.bgColor.b}}" data-name="b" bindblur="onBgColorChange" />
         </view>
       </view>
+      <!-- 端点样式 -->
+      <view wx:if="{{activeConfig==='lineCap'}}" class="config-operation">
+        <view class="config-operation__header">端点样式</view>
+        <view class="config-operation__options">
+          <view class="config-operation__option {{config.lineCap === 'butt' ? 'config-operation__option--active' : ''}}"
+            data-name="butt" bindtap="onLineCapClick">
+            <image src="../../static/images/linecap/butt.png" />
+          </view>
+          <view class="config-operation__option {{config.lineCap === 'round' ? 'config-operation__option--active' : ''}}" data-name="round" bindtap="onLineCapClick">
+            <image src="../../static/images/linecap/round.png" />
+          </view>
+          <view class="config-operation__option {{config.lineCap === 'square' ? 'config-operation__option--active' : ''}}" data-name="square" bindtap="onLineCapClick">
+            <image src="../../static/images/linecap/square.png" />
+          </view>
+        </view>
+      </view>
+      <!-- 拐角样式 -->
+      <view wx:if="{{activeConfig==='lineJoin'}}" class="config-operation">
+        <view class="config-operation__header">拐角样式</view>
+        <view class="config-operation__options">
+          <view class="config-operation__option {{config.lineJoin === 'miter' ? 'config-operation__option--active' : ''}}"
+            data-name="miter" bindtap="onLineJoinClick">
+            <image src="../../static/images/linejoin/miter.png" />
+          </view>
+          <view class="config-operation__option {{config.lineJoin === 'round' ? 'config-operation__option--active' : ''}}" data-name="round" bindtap="onLineJoinClick">
+            <image src="../../static/images/linejoin/round.png" />
+          </view>
+          <view class="config-operation__option {{config.lineJoin === 'bevel' ? 'config-operation__option--active' : ''}}" data-name="bevel" bindtap="onLineJoinClick">
+            <image src="../../static/images/linejoin/bevel.png" />
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="config-items">
+      <view class="config-item" data-name="lineWidth" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <view class="config-brush-width__preview" style="height: {{config.lineWidth}}px; width: {{config.lineWidth}}px;">
+          </view>
+        </view>
+        <view class="config-item__title">画笔大小</view>
+      </view>
+      <view class="config-item" data-name="escapeWidth" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <view class="config-escape-width__preview" style="border-radius: {{(config.escapeWidth > 30 ? 30 : config.escapeWidth) / 2}}px; height: {{config.escapeWidth - 2}}px; width: {{config.escapeWidth - 2}}px;">
+          </view>
+        </view>
+        <view class="config-item__title">橡皮大小</view>
+      </view>
+      <view class="config-item" data-name="brushColor" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <view class="config-brush-color__preview" style="background-color: {{config.brushColor.value}}">
+          </view>
+        </view>
+        <view class="config-item__title">画笔颜色</view>
+      </view>
+      <view class="config-item" data-name="bgColor" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <view class="config-bg-color__preview" style="background-color: {{config.bgColor.value}}">
+          </view>
+        </view>
+        <view class="config-item__title">画板设置</view>
+      </view>
+      <view class="config-item" data-name="lineCap" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <image src="../../static/images/linecap/{{config.lineCap}}.png" class="config-item__preview__image"></image>
+        </view>
+        <view class="config-item__title">端点样式</view>
+      </view>
+      <view class="config-item" data-name="lineJoin" bindtap="onConfigClick">
+        <view class="config-item__preview">
+          <image src="../../static/images/linejoin/{{config.lineJoin}}.png" class="config-item__preview__image"></image>
+        </view>
+        <view class="config-item__title">拐角样式</view>
+      </view>
+      <view class="config-item" bindtap="onChooseImage">
+        <view class="config-item__preview">
+          <image src="../../static/images/camera.png" class="config-item__preview__image"></image>
+        </view>
+        <view class="config-item__title">上传图片</view>
+      </view>
+      <view class="config-item" bindtap="download">
+        <view class="config-item__preview">
+          <image src="../../static/images/download.png" class="config-item__preview__image"></image>
+        </view>
+        <view class="config-item__title">保存图片</view>
+      </view>
+      <!-- <view class="config-item--placehold"></view> -->
     </view>
     <view class="config-confirm" bindtap="changeConfigShow">
-      确定
+      <view class="config-confirm-btn">确定</view>
     </view>
   </view>
 </view>

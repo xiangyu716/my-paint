@@ -7,8 +7,10 @@ Page({
     isShowConfig: false,
     activeTool: '',
     config: {
-      brushWidth: 3,
-      escapeWidth: 30,
+      lineWidth: 10, // 1-30
+      escapeWidth: 30, // 1-100
+      lineCap: 'round', // 线段两端样式 round-圆头，butt-无，square-多出一半的矩形
+      lineJoin: 'round', // 线段连接处样式 round-圆滑，miter-尖角，bevel-衔接
       brushColor: {
         r: 0,
         g: 0,
@@ -22,8 +24,9 @@ Page({
         value: 'rgb(255,255,255)'
       }
     },
-    oldBgColorValue: '',
+    bgImgInfo: {}, // 背景图片信息
     isEscaping: false,
+    activeConfig: '', // 当前正在操作的设置项
   },
   onReady() {
     wx.createSelectorQuery()
@@ -42,9 +45,11 @@ Page({
         this.resetCanvas();
       })
   },
+  // 分享朋友圈
   onShareTimeline() {
     return {};
   },
+  // 转发
   onShareAppMessage() {
     return {}
   },
@@ -53,53 +58,50 @@ Page({
     this.setData({
       activePosi: { x: e.touches[0].x, y: e.touches[0].y }
     });
-    this.fillActiveCircle();
     this.data.myCtx.beginPath();
     this.data.myCtx.moveTo(e.touches[0].x, e.touches[0].y)
   },
   // 用户触摸屏幕移动时
   touchMove(e) {
-    let { x: newX, y: newY } = e.touches[0];
-    let { x: oldX, y: oldY } = this.data.activePosi;
+    let { x, y } = e.touches[0];
     let ctx = this.data.myCtx;
-    ctx.lineTo(newX, newY)
+    ctx.lineTo(x, y);
     ctx.stroke();
-    this.setData({
-      activePosi: { x: newX, y: newY }
-    });
   },
   // 用户触摸屏幕结束
   touchEnd(e) {
-    this.fillActiveCircle();
+    let { x: endX, y: endY } = e.changedTouches[0],
+        { x, y} = this.data.activePosi;
+    // 起始位置等于结束位置才填充一个圆
+    x == endX && y === endY && this.fillActiveCircle();
   },
   // 在当前位置填充一个圆
   fillActiveCircle() {
     let { x, y } = this.data.activePosi;
     let ctx = this.data.myCtx;
     ctx.beginPath();
-    ctx.arc(x, y, this.data.config.brushWidth / 2, 0, 2*Math.PI)
+    ctx.arc(x, y, this.data.config.lineWidth / 2, 0, 2*Math.PI)
     ctx.fill();
   },
   // 改变设置弹窗显示与隐藏
   // 打开弹窗时，用图片代替canvas，解决canvas层级过高、弹窗不显示的问题；
   changeConfigShow() {
-    this.setData({ isShowConfig: !this.data.isShowConfig })
+    this.setData({ isShowConfig: !this.data.isShowConfig, activeConfig: '' })
     if (this.data.isShowConfig) { // 打开设置弹窗
-      this.setData({oldBgColorValue: this.data.config.bgColor.value}); // 记录画板颜色值
       this.canvasToImg(imgUrl => {
         this.setData({imgUrl})
       })
-    } else { // 关闭设置弹窗
-      // 更换画板颜色需要重置画布
-      if (this.data.oldBgColorValue !== this.data.config.bgColor.value) {
-        this.resetCanvas();
-      }
     }
+  },
+  onConfigClick(e) {
+    let name = e.currentTarget.dataset.name;
+    name = name === this.data.activeConfig ? '' : name;
+    this.setData({activeConfig: name});
   },
   // 当画笔宽度改变时
   onBrushWidthChange(e) {
     let config = this.data.config;
-    config.brushWidth = e.detail.value;
+    config.lineWidth = e.detail.value;
     this.setData({ config });
     this.resetBrush();
   },
@@ -138,35 +140,63 @@ Page({
         value = e.detail.value;
         // 控制数值边界
     value = value < 0 ? 0 : value > 255 ? 255 : value;
+    // 如果没有更改
     if (config.bgColor[e.target.dataset.name] == value) return;
-    // 每次打开设置弹窗，第一次修改花板颜色的时候让用户二次确认
-    if (config.bgColor.value === this.data.oldBgColorValue) {
-      wx.showModal({
-        title: '提示',
-        content: '更改画板颜色会清空当前内容，确定继续？',
-        success: (res) => {
-          if (res.confirm) {
-            config.bgColor[e.target.dataset.name] = value;
-            config.bgColor.value = `rgb(${color.r}, ${color.g}, ${color.b})`;
-            this.setData({ config });
-          } else if (res.cancel) {
-            this.setData({ config });
+    // 清空背景图片
+    this.setData({bgImgInfo: {}});
+    config.bgColor[e.target.dataset.name] = value;
+    config.bgColor.value = `rgb(${color.r}, ${color.g}, ${color.b})`;
+    this.setData({ config });
+    this.resetCanvas();
+  },
+  // 选择线段两端样式
+  onLineCapClick(e) {
+    let config = this.data.config;
+    config.lineCap = e.currentTarget.dataset.name;
+    this.setData({config});
+    this.data.myCtx.lineCap = this.data.config.lineCap;
+  },
+  // 选择线段连接样式
+  onLineJoinClick(e) {
+    let config = this.data.config;
+    config.lineJoin = e.currentTarget.dataset.name;
+    this.setData({config});
+    this.data.myCtx.lineJoin = this.data.config.lineJoin;
+  },
+  onChooseImage() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sizeType: ['original'],
+      success: res => {
+        let img = res.tempFiles[0];
+        wx.getImageInfo({
+          src: img.tempFilePath,
+          success: info => {
+            let image = this.data.myCanvas.createImage();
+            image.src = img.tempFilePath;
+            image.onload = (e) => {
+              this.setData({
+                bgImgInfo: {
+                  image,
+                  width: info.width,
+                  height: info.height,
+                }
+              });
+              this.resetCanvas();
+            }
           }
-        }
-      })
-    } else {
-      config.bgColor[e.target.dataset.name] = value;
-      config.bgColor.value = `rgb(${color.r}, ${color.g}, ${color.b})`;
-      this.setData({ config });
-    }
+        })
+      }
+    })
   },
   // 保存图片到本地
   download() {
     this.canvasToImg(url => {
       wx.saveImageToPhotosAlbum({
         filePath: url
-      })
-    })
+      });
+    });
   },
   // 将当前画布输出为图片，callback暴露图片地址
   canvasToImg(callback) {
@@ -178,18 +208,25 @@ Page({
       }
     })
   },
-  // 擦除
-  escape(isReset = false) {
-    // 不是重置配置，则为用户点击
-    isReset !== true && this.setData({isEscaping: !this.data.isEscaping});
+  onEscapeClick() {
+    this.changeEscapeState(true);
+  },
+  onBrushClick() {
+    this.changeEscapeState(false);
+  },
+  // 切换擦除状态
+  changeEscapeState(isEscaping, isReset = false) {
+    if (isEscaping === this.data.isEscaping && !isReset) return;
+    this.setData({isEscaping});
+    let { myCtx, config } = this.data;
     if (this.data.isEscaping) {
-      this.data.myCtx.strokeStyle = this.data.config.bgColor.value;
-      this.data.myCtx.fillStyle = this.data.config.bgColor.value;
-      this.data.myCtx.lineWidth = this.data.config.escapeWidth;
+      myCtx.strokeStyle = config.bgColor.value;
+      myCtx.fillStyle = config.bgColor.value;
+      myCtx.lineWidth = config.escapeWidth;
     } else {
-      this.data.myCtx.strokeStyle = this.data.config.brushColor.value;
-      this.data.myCtx.fillStyle = this.data.config.brushColor.value;
-      this.data.myCtx.lineWidth = this.data.config.brushWidth;
+      myCtx.strokeStyle = config.brushColor.value;
+      myCtx.fillStyle = config.brushColor.value;
+      myCtx.lineWidth = config.lineWidth;
     }
   },
   // 清空
@@ -199,6 +236,7 @@ Page({
       content: '确定清空当前内容？',
       success: (res) => {
         if (res.confirm) {
+          this.setData({bgImgInfo: {}});
           this.resetCanvas();
         }
       }
@@ -210,25 +248,32 @@ Page({
     // 重置宽高
     myCanvas.width = canvasInfo.width;
     myCanvas.height = canvasInfo.height;
+    // 背景
+    if (this.data.bgImgInfo.image) { // 有背景图片
+      let img = this.data.bgImgInfo;
+      myCtx.drawImage(img.image,0,0,img.width,img.height,0,0,canvasInfo.width,canvasInfo.height);
+    } else { // 无背景图片，填充背景色
+      myCtx.fillStyle = config.bgColor.value;
+      myCtx.fillRect(0, 0, canvasInfo.width, canvasInfo.height);
+    }
     // 缩放
     myCtx.scale(canvasInfo.dpr, canvasInfo.dpr);
     // 画笔宽度
-    myCtx.lineWidth = config.brushWidth;
+    myCtx.lineWidth = config.lineWidth;
+    // 画笔笔头形状
+    myCtx.lineCap = config.lineCap; // round-圆头，butt-无，square-多出一半的矩形
+    // 线段连接处形状
+    myCtx.lineJoin = config.lineJoin; // round-圆滑，miter-尖角，bevel-衔接
     // 画笔颜色
     myCtx.strokeStyle = config.brushColor.value;
-    // 先填充背景色
-    myCtx.fillStyle = config.bgColor.value;
-    myCtx.fillRect(0, 0, canvasInfo.width, canvasInfo.height);
-    // 再设置为画笔颜色
     myCtx.fillStyle = config.brushColor.value;
-    this.escape(true);
+    this.changeEscapeState(this.data.isEscaping, true);
   },
   // 重置画笔--不会清空当前内容
   resetBrush() {
     let { config, myCtx } = this.data;
-    myCtx.lineWidth = config.brushWidth;
+    myCtx.lineWidth = config.lineWidth;
     myCtx.fillStyle = myCtx.strokeStyle = config.brushColor.value;
-    this.escape(true);
+    this.changeEscapeState(this.data.isEscaping, true);
   },
-
 });
